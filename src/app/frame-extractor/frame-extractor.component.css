@@ -25,8 +25,8 @@ canvas{
   pointer-events: none;
 }
 
-#whiteCanva{
-  z-index: 4 !important;
+button{
+  margin: 10px;
 }
 
 .video-container{
@@ -55,6 +55,10 @@ canvas{
 
 .switch{
   margin-top: 10px;
+}
+
+mat-slider{
+  width: 30vw;
 }
 
 /* @media screen and (max-width: 768px) {

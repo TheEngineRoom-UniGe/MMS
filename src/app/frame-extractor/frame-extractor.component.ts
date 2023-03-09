@@ -71,6 +71,9 @@ export class FrameExtractorComponent {
       console.log("Not Authorized to access the videos");
       this.rotuer.navigate([""]);
     }
+    
+    // // Get the first video to review
+    
     this.httpC.getVideo(localStorage.getItem('authToken')!).subscribe(complete =>
       {
         console.log("Got this video URL: ", complete.body);
