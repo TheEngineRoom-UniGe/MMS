@@ -97,6 +97,7 @@ export class FrameExtractorComponent {
   // Payload to send to the server
   Payload: any[] = [];
   fr_list: Uint8ClampedArray[] = [];
+  gif_real_idx_list: number[] = [];
   current_fr!: Uint8ClampedArray;
   currentTime: number = 0;
 
@@ -154,37 +155,72 @@ export class FrameExtractorComponent {
       console.log("number of frames",this.gif.get_frames().length)
       this.gif.get_frames().forEach(function (this:any, element:any){
         // console.log(element);
-        this.fr_list.push(element.data.data);
+        // console.log(this.gif_index )
+        if(this.gif_index == 0){
+          console.log("firstttt")
+          this.gif_real_idx_list.push(this.gif_index);
+          this.current_fr = element.data.data;
+          this.gif_index++;
+        }
+        else{
+          if(!this.areSameFrame(this.current_fr, element.data.data)){
+            this.gif_real_idx_list.push(this.gif_index);
+          }
+          this.current_fr = element.data.data;
+          this.gif_index++;
+        }
       }.bind(this));
-      this.current_fr = this.fr_list[0]
+      console.log("number of real indexes:", this.gif_real_idx_list.length)
+      console.log("real indexes:", this.gif_real_idx_list)
+      this.gif_index = 0;
     }.bind(this));
-
   }
   next(){
-    // this.gif.play();
-    if(this.gif_index == 0){
-      console.log("primo giro")
-      this.gif_real_index++;
-      this.gif_index++;
+    if(this.gif_index == (this.gif_real_idx_list.length - 1)){
+      console.log("sei già all'ultimo frame")
+      return;
+    }
+    this.gif_index++;
+    this.gif_real_index = this.gif_real_idx_list[this.gif_index];
+    console.log(this.gif_real_index)
+    this.gif.move_to(this.gif_real_index);
+    // // this.gif.play();
+    // if(this.gif_index == this.fr_list.length -1){
+    //   console.log("Video Finished");
+    //   return;
+    // }
+    // if(this.gif_index == 0){
+    //   console.log("primo giro")
       
-    }
-    this.gif.move_to(++this.gif_index)
-    console.log(this.current_fr)
-    console.log(this.fr_list[this.gif_index])
+    //   // console.log("gif_real_index",this.gif_real_index)
+    //   // console.log('\n')
+    // }
+    // this.gif_index++;
     
-    console.log("gif_index",this.gif_index)
-    console.log("gif_real_index",this.gif_real_index)
-    console.log("are same", this.areSameFrame(this.current_fr, this.fr_list[this.gif_index]))
+    // // console.log(this.current_fr)
+    // // console.log(this.fr_list[this.gif_index])
+    
+    // // console.log("gif_index",this.gif_index)
+    // // console.log('\n')
+    // // console.log("gif_real_index",this.gif_real_index)
+    // console.log("comparing",this.gif_index -1, this.gif_index)
+    // console.log("are same", this.areSameFrame(this.fr_list[this.gif_index -1], this.fr_list[this.gif_index]))
 
-    if(!this.areSameFrame(this.fr_list[this.gif_index -1], this.fr_list[this.gif_index])){
-      this.gif_real_index++;
-    }
-    this.current_fr = this.fr_list[this.gif_index]
-    console.log("get_current_frame()",this.gif.get_current_frame())
-    console.log("gif_index",this.gif_index)
-    console.log("gif_real_index",this.gif_real_index)
-    console.log('\n')
-    // console.log(this.fr_list.length)
+    // if(!this.areSameFrame(this.fr_list[this.gif_index -1], this.fr_list[this.gif_index])){
+    //   this.gif_real_index++;
+    //   // this.gif_index++;
+    //   this.gif.move_to(this.gif_index);
+    //   return;
+    //   // console.log("gif_real_index",this.gif_real_index)
+    //   // console.log('\n')
+    // }
+    // else{
+    //   console.log("next")
+    //   this.next();
+    // }
+    // // console.log("get_current_frame()",this.gif.get_current_frame())
+    // // console.log("gif_index",this.gif_index)
+    // // console.log(this.fr_list.length)
   }
   
   areSameFrame(frame1:any, frame2:any): boolean{
@@ -197,9 +233,49 @@ export class FrameExtractorComponent {
   }
 
   prev(){
-    // this.gif.play();
-    console.log(this.gif.get_current_frame())
-    this.gif.move_to(--this.gif_index)
+    if(this.gif_index == 0){
+      console.log("sei già all primo frame")
+      return;
+    }
+    this.gif_index--;
+    this.gif_real_index = this.gif_real_idx_list[this.gif_index];
+    console.log(this.gif_real_index)
+    this.gif.move_to(this.gif_real_index);
+    // // this.gif.play();
+    // if(this.gif_index == 0){
+    //   console.log("You are already at the first frame");
+    //   return;
+    // }
+    // if(this.gif_index == this.fr_list.length -1){
+    //   console.log("ultimo frame")
+    //   // this.gif_real_index--;
+    //   // this.gif_index--;
+    //   // console.log("gif_real_index",this.gif_real_index)
+    //   // console.log('\n')
+    // }
+    // this.gif_index--;
+    
+    // // console.log(this.current_fr)
+    // // console.log(this.fr_list[this.gif_index])
+    
+    // // console.log("gif_index",this.gif_index)
+    // // console.log('\n')
+    // // console.log("gif_real_index",this.gif_real_index)
+    // // console.log("are same", this.areSameFrame(this.current_fr, this.fr_list[this.gif_index]))
+    // console.log("comparing",this.gif_index +1, this.gif_index)
+    // console.log("are same", this.areSameFrame(this.fr_list[this.gif_index +1], this.fr_list[this.gif_index]))
+    // if(!this.areSameFrame(this.fr_list[this.gif_index +1], this.fr_list[this.gif_index])){
+    //   this.gif_real_index--;
+    //   // this.gif_index--;
+    //   this.gif.move_to(this.gif_index);
+    //   return;
+    //   // console.log("gif_real_index",this.gif_real_index)
+    //   // console.log('\n')
+    // }
+    // else{
+    //   console.log("prev")
+    //   this.prev();
+    // }
   }
   countFrames(){
     this.videoElement.nativeElement.currentTime=0;
