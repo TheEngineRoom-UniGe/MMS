@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { HttpService } from '../services/http.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
+declare var SuperGif: any;
 @Component({
   selector: 'app-frame-extractor',
   templateUrl: './frame-extractor.component.html',
@@ -10,9 +11,9 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 })
 
 
-
 export class FrameExtractorComponent {
   @ViewChild('videoElement') videoElement!: ElementRef;
+  @ViewChild('imgElement') gifElement!: ElementRef;
   @ViewChild('videoCanva') canva!: ElementRef;
   @ViewChild('whiteCanva') whiteCanva!: ElementRef;
 
@@ -54,11 +55,13 @@ export class FrameExtractorComponent {
 
   token: string | null = null;
 
+  
   // ONLINE
   // static baseVideoUrl: string = "https://mms-video-storage.s3.eu-central-1.amazonaws.com/videos/"
 
   // OFFLINE
-  static baseVideoUrl: string = "https://mms-video-storage.s3.eu-central-1.amazonaws.com/videos/B-10.0-jSLmRpeC.mp4"
+  static baseVideoUrl: string = "https://mms-video-storage.s3.eu-central-1.amazonaws.com/videos/1secVideo.mp4"
+  // static baseVideoUrl: string = "./video.mp4"
   videoUrl: string = FrameExtractorComponent.baseVideoUrl;
   videoOffset: string ="";
   // If I'm dragging the mouse on the canvas
@@ -85,16 +88,27 @@ export class FrameExtractorComponent {
   currentSelector = this.selectorNames[0];
   circleColor = this.selectorColors[0];
 
+  lastCanvaFrame = new Uint8ClampedArray();
+  gif_index:number = 0;
+  gif_real_index:number = 0;
   // Current frame number
   currentProgress: number = 1;
-
+  frameNumber: number = 0;
   // Payload to send to the server
   Payload: any[] = [];
-
+  fr_list: Uint8ClampedArray[] = [];
+  current_fr!: Uint8ClampedArray;
   currentTime: number = 0;
 
+  gif:any;
   constructor(private httpC: HttpService, private rotuer: Router, private snackBar: MatSnackBar){}
 
+
+  ngOnInit(){
+    // this.videoElement.nativeElement.preload = "auto";
+    // this.videoElement.nativeElement.playbackRate = 0.1;
+    
+  }
   // ONLINE
   // COMMENTA PER FARLO FUNZIONARE OFFLINE
   // ngOnInit() {
@@ -132,55 +146,152 @@ export class FrameExtractorComponent {
   //   );
   // }
 
-  onVideoLoaded() {
-    // Wait for the video to load (?)
-    setTimeout(() => {
+  onImgLoaded(event: any){
+    console.log(this.gifElement.nativeElement.getAttribute('rel:auto_play'));
+    this.gif = SuperGif({gif:this.gifElement.nativeElement});
+    this.gif.load(function(this:any){
+      console.log('oh hey, now the gif is loaded');
+      console.log("number of frames",this.gif.get_frames().length)
+      this.gif.get_frames().forEach(function (this:any, element:any){
+        // console.log(element);
+        this.fr_list.push(element.data.data);
+      }.bind(this));
+      this.current_fr = this.fr_list[0]
+    }.bind(this));
+
+  }
+  next(){
+    // this.gif.play();
+    if(this.gif_index == 0){
+      console.log("primo giro")
+      this.gif_real_index++;
+      this.gif_index++;
       
-      console.log(this.videoElement.nativeElement);
-      
-      // Get the video height and width of the video
-      let h = this.videoElement.nativeElement.clientHeight;
-      let w = this.videoElement.nativeElement.clientWidth;
-      this.video_height = h;
-      this.video_width = w;
-      this.center_y = this.video_height/2;
-      this.center_x = this.video_width/2;
-      this.radius = Math.min(this.video_height, this.video_width)/10;
-      
-      this.red_r = this.radius;
-      this.green_r = this.radius+20;
-      this.blue_r = this.radius+40;
+    }
+    this.gif.move_to(++this.gif_index)
+    console.log(this.current_fr)
+    console.log(this.fr_list[this.gif_index])
+    
+    console.log("gif_index",this.gif_index)
+    console.log("gif_real_index",this.gif_real_index)
+    console.log("are same", this.areSameFrame(this.current_fr, this.fr_list[this.gif_index]))
 
-      console.log("Center: ",this.center_x, this.center_y)
-
-      // Set the initial position of the circles
-      this.red_x = this.center_x;
-      this.red_y = this.center_y;
-      this.green_x = this.center_x;
-      this.green_y = this.center_y;
-      this.blue_x = this.center_x;
-      this.blue_y = this.center_y;
-
-      console.log(h,w);
-
-      // Set a white background to hide the video when zooming (WIP)
-      let contextWhiteCanva = this.whiteCanva.nativeElement.getContext('2d');
-      contextWhiteCanva.beginPath();
-      contextWhiteCanva.rect(0, 0, w, h);
-      contextWhiteCanva.fillStyle = "white";
-      contextWhiteCanva.fill();
-
-      // Necessary to get the firs frame of the video
-      this.videoElement.nativeElement.requestVideoFrameCallback(this.doSomethingWithFrame);
-
-      console.log("Video width: ", this.videoElement.nativeElement.clientWidth);
-      console.log("Video height: ", this.videoElement.nativeElement.clientHeight);
-
-      console.log("Video width: ", this.videoElement.nativeElement.videoWidth);
-      console.log("Video height: ", this.videoElement.nativeElement.videoHeight);
-    });
+    if(!this.areSameFrame(this.fr_list[this.gif_index -1], this.fr_list[this.gif_index])){
+      this.gif_real_index++;
+    }
+    this.current_fr = this.fr_list[this.gif_index]
+    console.log("get_current_frame()",this.gif.get_current_frame())
+    console.log("gif_index",this.gif_index)
+    console.log("gif_real_index",this.gif_real_index)
+    console.log('\n')
+    // console.log(this.fr_list.length)
+  }
+  
+  areSameFrame(frame1:any, frame2:any): boolean{
+    for(let i=0; i<frame1.length; i++){
+      if((frame1[i]- frame2[i])!=0){
+        return false;
+      }
+    }
+    return true;
   }
 
+  prev(){
+    // this.gif.play();
+    console.log(this.gif.get_current_frame())
+    this.gif.move_to(--this.gif_index)
+  }
+  countFrames(){
+    this.videoElement.nativeElement.currentTime=0;
+    while(this.videoElement.nativeElement.currentTime < this.videoElement.nativeElement.duration){
+
+      let newCanvaFrame =this.canva.nativeElement.getContext('2d', { willReadFrequently: true }).getImageData(0,0,this.videoElement.nativeElement.videoWidth, this.videoElement.nativeElement.videoHeight).data;
+      let i = 0;
+      let equals = true;
+      for(i=0; i< newCanvaFrame.length; i++){
+        if(newCanvaFrame[i]-this.lastCanvaFrame[i]!=0){
+          // console.log("non uguali");
+          equals = false;
+          this.frameNumber++;
+          console.log("Frame #", this.frameNumber);
+
+          break;
+        }
+      }
+      this.lastCanvaFrame = newCanvaFrame;
+      console.log("Sono uguali? :", equals);
+      // console.log(newCanvaFrame);
+      // console.log(this.lastCanvaFrame);
+      if(equals == true){
+        console.log("I frame sono uguali skippo");
+        this.videoElement.nativeElement.currentTime+=0.005
+      }
+      }
+      console.log("frames:", this.frameNumber)
+  }
+
+  // onVideoLoaded() {
+  //   // Wait for the video to load (?)
+  //   setTimeout(() => {
+      
+  //     console.log(this.videoElement.nativeElement);
+      
+  //     // Get the video height and width of the video
+  //     let h = this.videoElement.nativeElement.clientHeight;
+  //     let w = this.videoElement.nativeElement.clientWidth;
+  //     this.video_height = h;
+  //     this.video_width = w;
+  //     this.center_y = this.video_height/2;
+  //     this.center_x = this.video_width/2;
+  //     this.radius = Math.min(this.video_height, this.video_width)/10;
+      
+  //     this.red_r = this.radius;
+  //     this.green_r = this.radius+20;
+  //     this.blue_r = this.radius+40;
+
+  //     console.log("Center: ",this.center_x, this.center_y)
+
+  //     // Set the initial position of the circles
+  //     this.red_x = this.center_x;
+  //     this.red_y = this.center_y;
+  //     this.green_x = this.center_x;
+  //     this.green_y = this.center_y;
+  //     this.blue_x = this.center_x;
+  //     this.blue_y = this.center_y;
+
+  //     console.log(h,w);
+
+  //     // Set a white background to hide the video when zooming (WIP)
+  //     let contextWhiteCanva = this.whiteCanva.nativeElement.getContext('2d');
+  //     contextWhiteCanva.beginPath();
+  //     contextWhiteCanva.rect(0, 0, w, h);
+  //     contextWhiteCanva.fillStyle = "white";
+  //     contextWhiteCanva.fill();
+
+  //     // this.canva.nativeElement.willReadFrequently = true;
+  //     // console.log(this.canva.nativeElement);
+  //     // Necessary to get the firs frame of the video
+  //     this.videoElement.nativeElement.requestVideoFrameCallback(this.doSomethingWithFrame);
+
+  //     console.log("Video width: ", this.videoElement.nativeElement.clientWidth);
+  //     console.log("Video height: ", this.videoElement.nativeElement.clientHeight);
+
+  //     console.log("Video width: ", this.videoElement.nativeElement.videoWidth);
+  //     console.log("Video height: ", this.videoElement.nativeElement.videoHeight);
+
+  //   });
+    
+  // }
+  
+
+
+  decodedFrames(){
+    console.log("ciao");
+  }
+  decodedFramesERR(){
+    console.log("ciao");
+  }
+  
   // Change style of the selected circle and the current selector
   onSelectorChange(currentVal: any){
     this.currentSelector = currentVal
@@ -348,7 +459,7 @@ export class FrameExtractorComponent {
   }
 
   zoomIn(){
-    this.canva.nativeElement.getContext('2d').clearRect(0, 0, (this.canva.nativeElement.width), (this.canva.nativeElement.height));
+    this.canva.nativeElement.getContext('2d', { willReadFrequently: true }).clearRect(0, 0, (this.canva.nativeElement.width), (this.canva.nativeElement.height));
 
     // Scale factor to scale the coordinates to the showed video size
     let scale_fac = this.videoElement.nativeElement.videoWidth/this.canva.nativeElement.width;
@@ -376,7 +487,7 @@ export class FrameExtractorComponent {
     if(currentRatio > originalRatio){
       k = this.canva.nativeElement.width / scaledWidth;
       console.log("k: ", k);
-      this.canva.nativeElement.getContext('2d').drawImage(this.videoElement.nativeElement,
+      this.canva.nativeElement.getContext('2d', { willReadFrequently: true }).drawImage(this.videoElement.nativeElement,
         Math.min(scaledX1, scaledX2),
         Math.min(scaledY1, scaledY2),
         scaledWidth,
@@ -386,7 +497,7 @@ export class FrameExtractorComponent {
     } else {
       k = this.canva.nativeElement.height / scaledHeight;
       console.log("k: ", k);
-      this.canva.nativeElement.getContext('2d').drawImage(this.videoElement.nativeElement,
+      this.canva.nativeElement.getContext('2d', { willReadFrequently: true }).drawImage(this.videoElement.nativeElement,
         Math.min(scaledX1, scaledX2),
         Math.min(scaledY1, scaledY2),
         scaledWidth,
@@ -477,6 +588,7 @@ export class FrameExtractorComponent {
     this.videoElement.nativeElement.play();
     this.currentProgress = Math.trunc( (this.videoElement.nativeElement.currentTime / this.videoElement.nativeElement.duration) * 100) + 2;
     console.log("currentProgress:", this.currentProgress);
+    console.log("payload length:", this.Payload.length);
   }
 
   skipFrame(){
@@ -530,7 +642,7 @@ export class FrameExtractorComponent {
 
   // Go back to full video view
   restoreView(){
-    this.canva.nativeElement.getContext('2d').drawImage(this.videoElement.nativeElement,0,0, this.videoElement.nativeElement.videoWidth, this.videoElement.nativeElement.videoHeight, 0,0, this.video_width,this.video_height);
+    this.canva.nativeElement.getContext('2d', { willReadFrequently: true }).drawImage(this.videoElement.nativeElement,0,0, this.videoElement.nativeElement.videoWidth, this.videoElement.nativeElement.videoHeight, 0,0, this.video_width,this.video_height);
     this.isZoomed = false;    
 
     // Place circles in the correct position
@@ -539,28 +651,52 @@ export class FrameExtractorComponent {
 
   // Frame by frame callback
   doSomethingWithFrame = (now:any, metadata:any) =>{
-    console.log(metadata.presentedFrames);
+    // console.log(metadata.presentedFrames);
 
     
     
-    this.videoElement.nativeElement.requestVideoFrameCallback(this.doSomethingWithFrame);
-    this.videoElement.nativeElement.pause();
-    let timeElapsed: number;
-    if(this.currentTime == 0)
-      timeElapsed = this.videoElement.nativeElement.currentTime;
-    else
-      timeElapsed = this.videoElement.nativeElement.currentTime - this.currentTime;
-    console.log("Time elapsed: ", timeElapsed)
-    if(timeElapsed < 0.05){
-      console.log("Something went wrong, skipping frame")
-      this.videoElement.nativeElement.play();
-    }
-    console.log("Time at pause: ", this.videoElement.nativeElement.currentTime);
-
-    let contextCanva = this.canva.nativeElement.getContext('2d');
     
-    contextCanva.drawImage(this.videoElement.nativeElement, 0, 0, this.videoElement.nativeElement.videoWidth, this.videoElement.nativeElement.videoHeight
+    this.canva.nativeElement.getContext('2d', { willReadFrequently: true }).drawImage(this.videoElement.nativeElement, 0, 0, this.videoElement.nativeElement.videoWidth, this.videoElement.nativeElement.videoHeight
       ,0,0, this.video_width,this.video_height);
+    this.videoElement.nativeElement.pause();
+    // let timeElapsed: number;
+    // if(this.currentTime == 0)
+    //   timeElapsed = this.videoElement.nativeElement.currentTime;
+    // else
+    //   timeElapsed = this.videoElement.nativeElement.currentTime - this.currentTime;
+    // console.log("Time elapsed: ", timeElapsed)
+    // if(timeElapsed < 0.05){
+    //   console.log("Something went wrong, skipping frame")
+    //   this.videoElement.nativeElement.play();
+    // }
+    // console.log("Time at pause: ", this.videoElement.nativeElement.currentTime);
+
+    // let contextCanva = this.canva.nativeElement.getContext('2d');
+    
+    
+
+    let newCanvaFrame =this.canva.nativeElement.getContext('2d', { willReadFrequently: true }).getImageData(0,0,this.videoElement.nativeElement.videoWidth, this.videoElement.nativeElement.videoHeight).data;
+    let i = 0;
+    let equals = true;
+    for(i=0; i< newCanvaFrame.length; i++){
+      if(newCanvaFrame[i]-this.lastCanvaFrame[i]!=0){
+        // console.log("non uguali");
+        equals = false;
+        this.frameNumber++;
+        console.log("Frame #", this.frameNumber);
+
+        this.lastCanvaFrame = newCanvaFrame;
+        break;
+      }
+    }
+    console.log("Sono uguali? :", equals);
+    // console.log(newCanvaFrame);
+    // console.log(this.lastCanvaFrame);
+    if(equals == true){
+      console.log("I frame sono uguali skippo");
+      this.videoElement.nativeElement.currentTime+=0.01
+    }
+
     
     // If previous frame was zoomed, zoom also the current one
     if(this.isZoomed){ 
@@ -568,11 +704,13 @@ export class FrameExtractorComponent {
     }
 
     // Set a white background to hide the video when zooming
-    let contextWhiteCanva = this.whiteCanva.nativeElement.getContext('2d');
+    let contextWhiteCanva = this.whiteCanva.nativeElement.getContext('2d', { willReadFrequently: true });
     contextWhiteCanva.beginPath();
     contextWhiteCanva.rect(0, 0, this.video_width, this.video_height);
     contextWhiteCanva.fillStyle = "white";
     contextWhiteCanva.fill();
+
+    this.videoElement.nativeElement.requestVideoFrameCallback(this.doSomethingWithFrame);
   }
 
   // Video ended callback

@@ -2,14 +2,17 @@ import { Component } from '@angular/core';
 // import { Router } from '@angular/router';
 // import { Event } from '@angular/router';
 // import { NavigationStart } from '@angular/router';
+
+declare var SuperGif: any;
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-export class AppComponent {
+export class AppComponent{
   title = 'MMS';
-
+  gif: any;
   // constructor(private router: Router){
   //   this.router.events.subscribe((event: Event) => {
   //     console.log(event);
@@ -26,4 +29,8 @@ export class AppComponent {
   // });
   // }
 
+  // ngOnInit(): void{
+  //   // this.gif = SuperGif();
+  //   console.log("ciao", this.gif)
+  // }
 }
