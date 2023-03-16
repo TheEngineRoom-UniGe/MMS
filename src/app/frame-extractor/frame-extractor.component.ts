@@ -156,6 +156,8 @@ export class FrameExtractorComponent {
       this.gif.get_frames().forEach(function (this:any, element:any){
         // console.log(element);
         // console.log(this.gif_index )
+        // this.gif_real_idx_list.push(this.gif_index);
+        // this.gif_index++;
         if(this.gif_index == 0){
           console.log("firstttt")
           this.gif_real_idx_list.push(this.gif_index);
@@ -165,8 +167,8 @@ export class FrameExtractorComponent {
         else{
           if(!this.areSameFrame(this.current_fr, element.data.data)){
             this.gif_real_idx_list.push(this.gif_index);
+            this.current_fr = element.data.data;
           }
-          this.current_fr = element.data.data;
           this.gif_index++;
         }
       }.bind(this));
