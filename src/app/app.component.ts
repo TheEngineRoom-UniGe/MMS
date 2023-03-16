@@ -3,7 +3,6 @@ import { Component } from '@angular/core';
 // import { Event } from '@angular/router';
 // import { NavigationStart } from '@angular/router';
 
-declare var SuperGif: any;
 
 @Component({
   selector: 'app-root',

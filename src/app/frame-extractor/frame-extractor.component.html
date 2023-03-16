@@ -1,6 +1,9 @@
 
-<button (click)="prev()" style="z-index: 1">prev</button>
-<button  (click)="next()" style="z-index: 1">next</button>
+<button (click)="prev(_mode.frame_by_frame)" style="z-index: 1">prev</button>
+<button  (click)="next(_mode.frame_by_frame)" style="z-index: 1">next</button>
+<mat-slider min=50 max = 120>
+    <input matSliderThumb [(ngModel)]="delay_multiplier">
+</mat-slider>
 <div class="video-container">
     <canvas #newImg></canvas>
 </div>
