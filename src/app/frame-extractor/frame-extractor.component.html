@@ -1,15 +1,9 @@
-<img #imgElement src="https://mms-video-storage.s3.eu-central-1.amazonaws.com/videos/B-10_0-jSLmRpeC_GIF.gif" 
-rel:animated_src="https://mms-video-storage.s3.eu-central-1.amazonaws.com/videos/B-10_0-jSLmRpeC_GIF.gif" (load)="onImgLoaded($event)" >
-<script type="text/javascript">
-    console.log("starting")
-    $$('img').each(function (img_tag) {
-        if (/.*\.gif/.test(img_tag.src)) {
-            var rub = new SuperGif({ gif: img_tag } );
-            rub.load(function(){
-                console.log('oh hey, now the gif is loaded');
-            });
-        }
-    });
-</script> 
-<button (click)="next()" style="z-index: 1">next</button>
+
 <button (click)="prev()" style="z-index: 1">prev</button>
+<button  (click)="next()" style="z-index: 1">next</button>
+<div class="video-container">
+    <canvas #newImg></canvas>
+</div>
+
+<img #imgElement [hidden]="true" *ngIf="ngif" src="https://mms-video-storage.s3.eu-central-1.amazonaws.com/videos/B-10_0-jSLmRpeC_GIF.gif" 
+rel:animated_src="https://mms-video-storage.s3.eu-central-1.amazonaws.com/videos/B-10_0-jSLmRpeC_GIF.gif" (load)="onImgLoaded($event)" [attr.clientWidth]="wwidth">

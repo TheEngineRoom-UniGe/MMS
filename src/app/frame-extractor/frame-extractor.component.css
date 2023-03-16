@@ -6,12 +6,22 @@ video{
     left: 0;
     z-index: 1;
 }
+
+/* canvas{
+  max-width: 20%;
+  height: auto;
+  position: absolute;
+  top: 100;
+  left: 0;
+  z-index: 1;
+} */
+
 img{
-    max-width: 100%;
-    height: auto;
+    max-width: 20%;
+    /* height: auto; */
     position: absolute;
-    top: 180px;
-    left: 40px;
+    top: 200px;
+    left: 400px;
     z-index: 0;
 }
 svg{
@@ -32,7 +42,7 @@ canvas{
   max-width: 100%;
   height: auto;
   position: absolute;
-  top: 350px;
+  top: 0;
   left: 0;
   z-index: 3;
   pointer-events: none;
@@ -43,7 +53,7 @@ button{
 }
 
 .video-container{
-  width: 35vw;
+  width: 50vw;
   max-width: 70vw;
   min-width: 30vw;
   position: relative;

@@ -14,6 +14,7 @@ declare var SuperGif: any;
 export class FrameExtractorComponent {
   @ViewChild('videoElement') videoElement!: ElementRef;
   @ViewChild('imgElement') gifElement!: ElementRef;
+  @ViewChild('newImg') newImg!: ElementRef;
   @ViewChild('videoCanva') canva!: ElementRef;
   @ViewChild('whiteCanva') whiteCanva!: ElementRef;
 
@@ -96,13 +97,16 @@ export class FrameExtractorComponent {
   frameNumber: number = 0;
   // Payload to send to the server
   Payload: any[] = [];
-  fr_list: Uint8ClampedArray[] = [];
+  fr_list: any[] = [];
   gif_real_idx_list: number[] = [];
   current_fr!: Uint8ClampedArray;
   currentTime: number = 0;
 
+
+  wwidth: number = 0;
   gif:any;
-  constructor(private httpC: HttpService, private rotuer: Router, private snackBar: MatSnackBar){}
+  ngif:boolean = true;
+  constructor(private httpC: HttpService, private rotuer: Router, private snackBar: MatSnackBar, private page: ElementRef){}
 
 
   ngOnInit(){
@@ -149,10 +153,11 @@ export class FrameExtractorComponent {
 
   onImgLoaded(event: any){
     console.log(this.gifElement.nativeElement.getAttribute('rel:auto_play'));
-    this.gif = SuperGif({gif:this.gifElement.nativeElement});
+    this.gif = SuperGif({gif:this.gifElement.nativeElement, draw_while_loading:false});
     this.gif.load(function(this:any){
       console.log('oh hey, now the gif is loaded');
       console.log("number of frames",this.gif.get_frames().length)
+      this.fr_list = this.gif.get_frames();
       this.gif.get_frames().forEach(function (this:any, element:any){
         // console.log(element);
         // console.log(this.gif_index )
@@ -174,9 +179,66 @@ export class FrameExtractorComponent {
       }.bind(this));
       console.log("number of real indexes:", this.gif_real_idx_list.length)
       console.log("real indexes:", this.gif_real_idx_list)
+      console.log("fr_list:", this.fr_list)
       this.gif_index = 0;
+      // this.ngif=false;
+      // console.log(this.ngif)
+      console.log(this.gifElement.nativeElement)
+      console.log(this.gifElement.nativeElement)
+      console.log(this.page.nativeElement.querySelectorAll('.jsgif')[0])
+      this.page.nativeElement.querySelectorAll('.jsgif').forEach(function (element:any) {
+        console.log("removing", element)
+        element.remove();
+      });
+      console.log("fr_list:", this.fr_list)
+      console.log(this.newImg.nativeElement)
+      this.newImg.nativeElement.width =  this.fr_list[0].data.width;
+      this.newImg.nativeElement.height =  this.fr_list[0].data.height;
+      this.updateCanvas(0);
+
     }.bind(this));
+    // this.ngif=false;
+    // console.log(this.ngif)
+    console.log("ciao")
+    console.log("ciao")
+    console.log("ciao")
+    console.log("ciao")
+    console.log("ciao")
+    console.log("ciao")
+    console.log("ciao")
+    console.log("ciao")
+    console.log("ciao")
+    console.log("ciao")
+    console.log("ciao")
+    console.log("ciao")
+    console.log("ciao")
+    console.log("ciao")
+    console.log("ciao")
+    console.log("ciao")
   }
+
+  onBitmapCreate(res:any){
+    const ctx = this.newImg.nativeElement.getContext('2d');
+    console.log(res)
+    ctx.drawImage(createImageBitmap(this.fr_list[0].data), 0, 0, this.fr_list[0].data.width, this.fr_list[0].data.height)
+  }
+
+  updateCanvas(index: number){
+    const that = this;
+    createImageBitmap(this.fr_list[index].data).then(
+      function(bitmap:any){
+        console.log(bitmap)
+        console.log(that)
+        const ctx = that.newImg.nativeElement.getContext('2d');
+        ctx.drawImage(bitmap, 0, 0, bitmap.width, bitmap.height)
+      }.bind(that)
+    ).catch(
+      function(error:any){
+        console.error(error)
+      }.bind(that)
+    );
+  }
+
   next(){
     if(this.gif_index == (this.gif_real_idx_list.length - 1)){
       console.log("sei già all'ultimo frame")
@@ -185,44 +247,8 @@ export class FrameExtractorComponent {
     this.gif_index++;
     this.gif_real_index = this.gif_real_idx_list[this.gif_index];
     console.log(this.gif_real_index)
-    this.gif.move_to(this.gif_real_index);
-    // // this.gif.play();
-    // if(this.gif_index == this.fr_list.length -1){
-    //   console.log("Video Finished");
-    //   return;
-    // }
-    // if(this.gif_index == 0){
-    //   console.log("primo giro")
-      
-    //   // console.log("gif_real_index",this.gif_real_index)
-    //   // console.log('\n')
-    // }
-    // this.gif_index++;
-    
-    // // console.log(this.current_fr)
-    // // console.log(this.fr_list[this.gif_index])
-    
-    // // console.log("gif_index",this.gif_index)
-    // // console.log('\n')
-    // // console.log("gif_real_index",this.gif_real_index)
-    // console.log("comparing",this.gif_index -1, this.gif_index)
-    // console.log("are same", this.areSameFrame(this.fr_list[this.gif_index -1], this.fr_list[this.gif_index]))
-
-    // if(!this.areSameFrame(this.fr_list[this.gif_index -1], this.fr_list[this.gif_index])){
-    //   this.gif_real_index++;
-    //   // this.gif_index++;
-    //   this.gif.move_to(this.gif_index);
-    //   return;
-    //   // console.log("gif_real_index",this.gif_real_index)
-    //   // console.log('\n')
-    // }
-    // else{
-    //   console.log("next")
-    //   this.next();
-    // }
-    // // console.log("get_current_frame()",this.gif.get_current_frame())
-    // // console.log("gif_index",this.gif_index)
-    // // console.log(this.fr_list.length)
+    // this.gif.move_to(this.gif_real_index);
+    this.updateCanvas(this.gif_real_index);
   }
   
   areSameFrame(frame1:any, frame2:any): boolean{
@@ -242,42 +268,8 @@ export class FrameExtractorComponent {
     this.gif_index--;
     this.gif_real_index = this.gif_real_idx_list[this.gif_index];
     console.log(this.gif_real_index)
-    this.gif.move_to(this.gif_real_index);
-    // // this.gif.play();
-    // if(this.gif_index == 0){
-    //   console.log("You are already at the first frame");
-    //   return;
-    // }
-    // if(this.gif_index == this.fr_list.length -1){
-    //   console.log("ultimo frame")
-    //   // this.gif_real_index--;
-    //   // this.gif_index--;
-    //   // console.log("gif_real_index",this.gif_real_index)
-    //   // console.log('\n')
-    // }
-    // this.gif_index--;
-    
-    // // console.log(this.current_fr)
-    // // console.log(this.fr_list[this.gif_index])
-    
-    // // console.log("gif_index",this.gif_index)
-    // // console.log('\n')
-    // // console.log("gif_real_index",this.gif_real_index)
-    // // console.log("are same", this.areSameFrame(this.current_fr, this.fr_list[this.gif_index]))
-    // console.log("comparing",this.gif_index +1, this.gif_index)
-    // console.log("are same", this.areSameFrame(this.fr_list[this.gif_index +1], this.fr_list[this.gif_index]))
-    // if(!this.areSameFrame(this.fr_list[this.gif_index +1], this.fr_list[this.gif_index])){
-    //   this.gif_real_index--;
-    //   // this.gif_index--;
-    //   this.gif.move_to(this.gif_index);
-    //   return;
-    //   // console.log("gif_real_index",this.gif_real_index)
-    //   // console.log('\n')
-    // }
-    // else{
-    //   console.log("prev")
-    //   this.prev();
-    // }
+    // this.gif.move_to(this.gif_real_index);
+    this.updateCanvas(this.gif_real_index);
   }
   countFrames(){
     this.videoElement.nativeElement.currentTime=0;
